@@ -7,7 +7,7 @@
 #include <string.h>
 
 // TODO macro to specify in makefile to tell system endianness
-#define MQTT_CONVERT_WORD_TO_BIG_ENDIAN(Value) (((Value << 8) & 0xFF00) | Value >> 8)
+#define MQTT_CONVERT_WORD_TO_BIG_ENDIAN(Value) ((((Value) << 8) & 0xFF00) | (Value) >> 8)
 
 //-------------------------------------------------------------------------------------------------
 // Private types
@@ -32,7 +32,7 @@ typedef struct __attribute__((packed))
  * @param Pointer_String The string data to append.
  * @return How many bytes of payload have been added.
  */
-/*static*/ int MQTTAppendStringToPayload(unsigned char **Pointer_Pointer_Payload_Buffer, char *Pointer_String)
+static int MQTTAppendStringToPayload(unsigned char **Pointer_Pointer_Payload_Buffer, char *Pointer_String)
 {
 	unsigned char *Pointer_Payload;
 	unsigned short Length, *Pointer_Word;
@@ -56,28 +56,25 @@ typedef struct __attribute__((packed))
 //-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
-# if 0
-int MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Pointer_Connection_Parameters)
+void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Pointer_Connection_Parameters)
 {
 	TMQTTHeaderConnect *Pointer_Header;
 	unsigned char *Pointer_Payload;
-	unsigned short Length; *Pointer_Word;
+	int Payload_Size;
 	
 	// Do some safety checks on parameters
 	assert(Pointer_Context != NULL);
 	assert(Pointer_Connection_Parameters != NULL);
-	assrt(Pointer_Connection_Parameters->Pointer_String_Client_Identifier != NULL);
+	assert(Pointer_Connection_Parameters->Pointer_String_Client_Identifier != NULL);
 	assert(Pointer_Connection_Parameters->Pointer_Buffer != NULL);
-	assert(Pointer_Connection_Parameters->Buffer_Size > 0);
 	// TODO other parameters
 	
 	// Initialize context
 	memset(Pointer_Context, 0, sizeof(TMQTTContext));
-	Pointer_Context->Pointer_Message_Buffer = Pointer_Buffer->Pointer_Buffer;
-	Pointer_Context->Message_Buffer_Maximum_Size = Buffer_Size;
+	Pointer_Context->Pointer_Message_Buffer = Pointer_Connection_Parameters->Pointer_Buffer;
 	
 	// Cache message relevant parts access
-	Pointer_Header = Pointer_Context->Pointer_Message_Buffer;
+	Pointer_Header = (TMQTTHeaderConnect *) Pointer_Context->Pointer_Message_Buffer;
 	Pointer_Payload = Pointer_Context->Pointer_Message_Buffer + sizeof(TMQTTHeaderConnect);
 	
 	// Initialize CONNECT message header fixed fields
@@ -88,22 +85,31 @@ int MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Pointe
 	Pointer_Header->Protocol_Name_Characters[2] = 'T';
 	Pointer_Header->Protocol_Name_Characters[3] = 'T';
 	Pointer_Header->Protocol_Level = 4;
+	Pointer_Header->Keep_Alive = MQTT_CONVERT_WORD_TO_BIG_ENDIAN(Pointer_Connection_Parameters->Keep_Alive);
 	
 	// Add client identifier (this field is mandatory)
-	// Set length field
-	Length = (unsigned short) strlen(Pointer_Connection_Parameters->Pointer_String_Client_Identifier);
-	Pointer_Word = (unsigned short *) Pointer_Payload;
-	*Pointer_Word = MQTT_CONVERT_WORD_TO_BIG_ENDIAN(Length);
-	Pointer_Payload += 2;
-	// Set data field
-	memcpy(Pointer_Payload, Pointer_Connection_Parameters->Pointer_String_Client_Identifier, Length);
-	Pointer_Payload += Length;
+	Payload_Size = MQTTAppendStringToPayload(&Pointer_Payload, Pointer_Connection_Parameters->Pointer_String_Client_Identifier);
 	
 	// Is a user name provided ?
-	/*if (Pointer_Connection_Parameters->Pointer_String_User_Name != NULL)
+	if (Pointer_Connection_Parameters->Pointer_String_User_Name != NULL)
 	{
-		Length = (unsigned short) strlen(Pointer_Connection_Parameters->Pointer_String_User_Name);
-		memcpy(*/
+		Payload_Size += MQTTAppendStringToPayload(&Pointer_Payload, Pointer_Connection_Parameters->Pointer_String_User_Name);
+		// Set user name flag
+		Pointer_Header->Connect_Flags |= 0x80;
+	}
+	
+	// Is a password provided ?
+	if (Pointer_Connection_Parameters->Pointer_String_Password != NULL)
+	{
+		Payload_Size += MQTTAppendStringToPayload(&Pointer_Payload, Pointer_Connection_Parameters->Pointer_String_Password);
+		// Set password flag
+		Pointer_Header->Connect_Flags |= 0x40;
+	}
+	
+	// Is session cleaning required ?
+	if (Pointer_Connection_Parameters->Is_Clean_Session_Enabled) Pointer_Header->Connect_Flags |= 0x02; // Set clean session flag
+	
+	// Update length fields
+	Pointer_Header->Remaining_Length = 10 + Payload_Size; // +10 for variable header TODO compute size according to specs
+	Pointer_Context->Message_Size = sizeof(TMQTTHeaderConnect) + Payload_Size;
 }
-
-#endif

@@ -13,8 +13,7 @@
 typedef struct
 {
 	unsigned char *Pointer_Message_Buffer;
-	int Message_Buffer_Maximum_Size;
-	int Current_Message_Size;
+	int Message_Size;
 } TMQTTContext;
 
 /** Parameters to provide when establishing an MQTT connection to the server. */
@@ -27,13 +26,12 @@ typedef struct
 	unsigned short Keep_Alive;
 	// TODO : add will support
 	void *Pointer_Buffer; //!< The buffer in which messages will be forged. Make sure it is big enough.
-	int Buffer_Size; //!< Buffer maximum size.
 } TMQTTConnectionParameters;
 
 //-------------------------------------------------------------------------------------------------
 // Functions
 //-------------------------------------------------------------------------------------------------
 /** TODO */
-int MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Pointer_Connection_Parameters);
+void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Pointer_Connection_Parameters);
 
 #endif
