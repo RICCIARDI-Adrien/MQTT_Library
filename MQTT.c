@@ -171,10 +171,10 @@ void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Point
 	MQTTAddFixedHeader(Pointer_Context, MQTT_CONTROL_PACKET_TYPE_CONNECT, sizeof(TMQTTHeaderConnect) + Payload_Size);
 }
 
-void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name, char *Pointer_String_Application_Message)
+void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name, char *Pointer_Application_Message, int Application_Message_Size)
 {
 	unsigned char *Pointer_Variable_Header;
-	int Data_Size, Application_Message_Size;
+	int Data_Size;
 	
 	// Cache message relevant parts access
 	Pointer_Variable_Header = (unsigned char *) (MQTT_FIXED_HEADER_MAXIMUM_SIZE + Pointer_Context->Pointer_Buffer); // Keep enough room at the buffer beginning to store the biggest possible fixed header
@@ -185,10 +185,11 @@ void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name,
 	// TODO add packet identifier if QoS > 0
 	
 	// Add application message (if any)
-	if (Pointer_String_Application_Message == NULL) return;
-	Application_Message_Size = strlen(Pointer_String_Application_Message);
-	memcpy(Pointer_Variable_Header, Pointer_String_Application_Message, Application_Message_Size); // There is no length field for the application message
-	Data_Size += Application_Message_Size;
+	if (Application_Message_Size > 0)
+	{
+		memcpy(Pointer_Variable_Header, Pointer_Application_Message, Application_Message_Size); // There is no length field for the application message
+		Data_Size += Application_Message_Size;
+	}
 	
 	// Terminate message
 	MQTTAddFixedHeader(Pointer_Context, MQTT_CONTROL_PACKET_TYPE_PUBLISH, Data_Size);
