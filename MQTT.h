@@ -38,4 +38,7 @@ typedef struct
 /** TODO */
 void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Pointer_Connection_Parameters);
 
+/** TODO */
+void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name, char *Pointer_String_Application_Message);
+
 #endif

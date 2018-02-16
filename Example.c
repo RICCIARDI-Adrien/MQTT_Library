@@ -48,16 +48,28 @@ int main(void)
 	MQTTConnect(&MQTT_Context, &MQTT_Connection_Parameters);
 	write(Socket, MQTT_Context.Pointer_Message_Buffer, MQTT_Context.Message_Size);*/
 	
-	MQTT_Connection_Parameters.Pointer_String_Client_Identifier = "ID du client";
+	/*MQTT_Connection_Parameters.Pointer_String_Client_Identifier = "ID du client";
 	MQTT_Connection_Parameters.Pointer_String_User_Name = "Ceci est un message bien plus long pour voir si le calcul d'une taille de paquet supérieure à 127 octets fonctionne correctement";
 	MQTT_Connection_Parameters.Pointer_String_Password = "Ce champ aussi est allongé dans le but décrit exhaustivement dans le champ précédent";
 	MQTT_Connection_Parameters.Is_Clean_Session_Enabled = 1;
 	MQTT_Connection_Parameters.Keep_Alive = 60;
 	MQTT_Connection_Parameters.Pointer_Buffer = Buffer;
 	MQTTConnect(&MQTT_Context, &MQTT_Connection_Parameters);
+	write(Socket, MQTT_Context.Pointer_Message_Buffer, MQTT_Context.Message_Size);*/
+	
+	MQTT_Connection_Parameters.Pointer_String_Client_Identifier = "ID du client";
+	MQTT_Connection_Parameters.Pointer_String_User_Name = NULL;
+	MQTT_Connection_Parameters.Pointer_String_Password = NULL;
+	MQTT_Connection_Parameters.Is_Clean_Session_Enabled = 1;
+	MQTT_Connection_Parameters.Keep_Alive = 60;
+	MQTT_Connection_Parameters.Pointer_Buffer = Buffer;
+	MQTTConnect(&MQTT_Context, &MQTT_Connection_Parameters);
 	write(Socket, MQTT_Context.Pointer_Message_Buffer, MQTT_Context.Message_Size);
 	
-	//read(Socket, Buffer, sizeof(Buffer));
+	read(Socket, Buffer, sizeof(Buffer)); // CONNACK
+	
+	MQTTPublish(&MQTT_Context, "super/topic/qui/a/la/classe", "et voici un incroyable message de test");
+	write(Socket, MQTT_Context.Pointer_Message_Buffer, MQTT_Context.Message_Size);
 	
 	close(Socket);
 	

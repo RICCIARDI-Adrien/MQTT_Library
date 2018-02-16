@@ -24,7 +24,8 @@
 /** All supported MQTT control packet types. Values are shifted yet to allow a simple binary "or" operation. */
 typedef enum
 {
-	MQTT_CONTROL_PACKET_TYPE_CONNECT = 1 << 4
+	MQTT_CONTROL_PACKET_TYPE_CONNECT = 1 << 4,
+	MQTT_CONTROL_PACKET_TYPE_PUBLISH = 3 << 4
 } TMQTTControlPacketType;
 
 /** CONNECT message variable headers. */
@@ -45,7 +46,7 @@ typedef struct __attribute__((packed))
  * @param Pointer_String The string data to append.
  * @return How many bytes of payload have been added.
  */
-static int MQTTAppendStringToPayload(unsigned char **Pointer_Pointer_Payload_Buffer, char *Pointer_String)
+static int MQTTAppendString(unsigned char **Pointer_Pointer_Payload_Buffer, char *Pointer_String)
 {
 	unsigned char *Pointer_Payload;
 	unsigned short Length, *Pointer_Word;
@@ -141,15 +142,16 @@ void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Point
 	Pointer_Variable_Header->Protocol_Name_Characters[2] = 'T';
 	Pointer_Variable_Header->Protocol_Name_Characters[3] = 'T';
 	Pointer_Variable_Header->Protocol_Level = 4;
+	Pointer_Variable_Header->Connect_Flags = 0; // Reset flags
 	Pointer_Variable_Header->Keep_Alive = MQTT_CONVERT_WORD_TO_BIG_ENDIAN(Pointer_Connection_Parameters->Keep_Alive);
 	
 	// Add client identifier (this field is mandatory)
-	Payload_Size = MQTTAppendStringToPayload(&Pointer_Payload, Pointer_Connection_Parameters->Pointer_String_Client_Identifier);
+	Payload_Size = MQTTAppendString(&Pointer_Payload, Pointer_Connection_Parameters->Pointer_String_Client_Identifier);
 	
 	// Is a user name provided ?
 	if (Pointer_Connection_Parameters->Pointer_String_User_Name != NULL)
 	{
-		Payload_Size += MQTTAppendStringToPayload(&Pointer_Payload, Pointer_Connection_Parameters->Pointer_String_User_Name);
+		Payload_Size += MQTTAppendString(&Pointer_Payload, Pointer_Connection_Parameters->Pointer_String_User_Name);
 		// Set user name flag
 		Pointer_Variable_Header->Connect_Flags |= 0x80;
 	}
@@ -157,7 +159,7 @@ void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Point
 	// Is a password provided ?
 	if (Pointer_Connection_Parameters->Pointer_String_Password != NULL)
 	{
-		Payload_Size += MQTTAppendStringToPayload(&Pointer_Payload, Pointer_Connection_Parameters->Pointer_String_Password);
+		Payload_Size += MQTTAppendString(&Pointer_Payload, Pointer_Connection_Parameters->Pointer_String_Password);
 		// Set password flag
 		Pointer_Variable_Header->Connect_Flags |= 0x40;
 	}
@@ -165,6 +167,29 @@ void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Point
 	// Is session cleaning required ?
 	if (Pointer_Connection_Parameters->Is_Clean_Session_Enabled) Pointer_Variable_Header->Connect_Flags |= 0x02; // Set clean session flag
 	
-	// Update length fields
+	// Terminate message
 	MQTTAddFixedHeader(Pointer_Context, MQTT_CONTROL_PACKET_TYPE_CONNECT, sizeof(TMQTTHeaderConnect) + Payload_Size);
+}
+
+void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name, char *Pointer_String_Application_Message)
+{
+	unsigned char *Pointer_Variable_Header;
+	int Data_Size, Application_Message_Size;
+	
+	// Cache message relevant parts access
+	Pointer_Variable_Header = (unsigned char *) (MQTT_FIXED_HEADER_MAXIMUM_SIZE + Pointer_Context->Pointer_Buffer); // Keep enough room at the buffer beginning to store the biggest possible fixed header
+	
+	// Add topic name (this field is mandatory)
+	Data_Size = MQTTAppendString(&Pointer_Variable_Header, Pointer_String_Topic_Name);
+	
+	// TODO add packet identifier if QoS > 0
+	
+	// Add application message (if any)
+	if (Pointer_String_Application_Message == NULL) return;
+	Application_Message_Size = strlen(Pointer_String_Application_Message);
+	memcpy(Pointer_Variable_Header, Pointer_String_Application_Message, Application_Message_Size); // There is no length field for the application message
+	Data_Size += Application_Message_Size;
+	
+	// Terminate message
+	MQTTAddFixedHeader(Pointer_Context, MQTT_CONTROL_PACKET_TYPE_PUBLISH, Data_Size);
 }
