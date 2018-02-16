@@ -31,7 +31,7 @@ int main(void)
 	}
 	
 	Address.sin_family = AF_INET;
-	Address.sin_addr.s_addr = inet_addr("192.168.1.13");
+	Address.sin_addr.s_addr = inet_addr("127.0.0.1");
 	Address.sin_port = htons(1883);
 	if (connect(Socket, (const struct sockaddr *) &Address, sizeof(Address)) == -1)
 	{
@@ -39,14 +39,22 @@ int main(void)
 		return -1;
 	}
 	
-	MQTT_Connection_Parameters.Pointer_String_Client_Identifier = "ID du client";
+	/*MQTT_Connection_Parameters.Pointer_String_Client_Identifier = "ID du client";
 	MQTT_Connection_Parameters.Pointer_String_User_Name = "nom d'utilisateur";
 	MQTT_Connection_Parameters.Pointer_String_Password = "super mot de passe de ouf";
 	MQTT_Connection_Parameters.Is_Clean_Session_Enabled = 1;
 	MQTT_Connection_Parameters.Keep_Alive = 60;
 	MQTT_Connection_Parameters.Pointer_Buffer = Buffer;
 	MQTTConnect(&MQTT_Context, &MQTT_Connection_Parameters);
+	write(Socket, MQTT_Context.Pointer_Message_Buffer, MQTT_Context.Message_Size);*/
 	
+	MQTT_Connection_Parameters.Pointer_String_Client_Identifier = "ID du client";
+	MQTT_Connection_Parameters.Pointer_String_User_Name = "Ceci est un message bien plus long pour voir si le calcul d'une taille de paquet supérieure à 127 octets fonctionne correctement";
+	MQTT_Connection_Parameters.Pointer_String_Password = "Ce champ aussi est allongé dans le but décrit exhaustivement dans le champ précédent";
+	MQTT_Connection_Parameters.Is_Clean_Session_Enabled = 1;
+	MQTT_Connection_Parameters.Keep_Alive = 60;
+	MQTT_Connection_Parameters.Pointer_Buffer = Buffer;
+	MQTTConnect(&MQTT_Context, &MQTT_Connection_Parameters);
 	write(Socket, MQTT_Context.Pointer_Message_Buffer, MQTT_Context.Message_Size);
 	
 	//read(Socket, Buffer, sizeof(Buffer));

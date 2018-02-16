@@ -12,8 +12,12 @@
 /** Context shared across MQTT functions. */
 typedef struct
 {
+	// Following fields contain the MQTT message ready to transmit or to decode (in case of reception)
 	unsigned char *Pointer_Message_Buffer;
 	int Message_Size;
+	
+	// Following fields are for internal usage only, do not modify or use
+	unsigned char *Pointer_Buffer; //!< The buffer in which messages are forged. A message does not necessarily start from offset 0. Only Pointer_Message_Buffer pointer tells the message beginning.
 } TMQTTContext;
 
 /** Parameters to provide when establishing an MQTT connection to the server. */
