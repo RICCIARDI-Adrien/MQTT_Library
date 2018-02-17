@@ -41,4 +41,10 @@ void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Point
 /** TODO */
 void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name, char *Pointer_Application_Message, int Application_Message_Size);
 
+/** Create a DISCONNECT packet to send to the server.
+ * @param Pointer_Context A context previously initialized with a call to MQTTConnect().
+ * @note Client should close network connection after this packet has been sent.
+ */
+void MQTTDisconnect(TMQTTContext *Pointer_Context);
+
 #endif

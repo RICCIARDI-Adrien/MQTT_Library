@@ -25,7 +25,8 @@
 typedef enum
 {
 	MQTT_CONTROL_PACKET_TYPE_CONNECT = 1 << 4,
-	MQTT_CONTROL_PACKET_TYPE_PUBLISH = 3 << 4
+	MQTT_CONTROL_PACKET_TYPE_PUBLISH = 3 << 4,
+	MQTT_CONTROL_PACKET_TYPE_DISCONNECT = 14 << 4
 } TMQTTControlPacketType;
 
 /** CONNECT message variable headers. */
@@ -193,4 +194,13 @@ void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name,
 	
 	// Terminate message
 	MQTTAddFixedHeader(Pointer_Context, MQTT_CONTROL_PACKET_TYPE_PUBLISH, Data_Size);
+}
+
+void MQTTDisconnect(TMQTTContext *Pointer_Context)
+{
+	Pointer_Context->Pointer_Buffer[0] = MQTT_CONTROL_PACKET_TYPE_DISCONNECT;
+	Pointer_Context->Pointer_Buffer[1] = 0;
+	
+	Pointer_Context->Pointer_Message_Buffer = Pointer_Context->Pointer_Buffer;
+	Pointer_Context->Message_Size = 2;
 }

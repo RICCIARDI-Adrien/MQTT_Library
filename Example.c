@@ -71,6 +71,9 @@ int main(void)
 	MQTTPublish(&MQTT_Context, "super/topic/qui/a/la/classe", "et voici un incroyable message de test", sizeof("et voici un incroyable message de test") - 1);
 	write(Socket, MQTT_Context.Pointer_Message_Buffer, MQTT_Context.Message_Size);
 	
+	MQTTDisconnect(&MQTT_Context);
+	write(Socket, MQTT_Context.Pointer_Message_Buffer, MQTT_Context.Message_Size);
+	
 	close(Socket);
 	
 	return 0;
