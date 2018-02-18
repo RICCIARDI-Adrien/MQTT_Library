@@ -32,9 +32,9 @@ typedef enum
 /** CONNECT message variable headers. */
 typedef struct __attribute__((packed))
 {
-	unsigned short Protocol_Name_Length;
-	unsigned char Protocol_Name_Characters[4];
-	unsigned char Protocol_Level; //!< Stands for MQTT version.
+	unsigned short Protocol_Name_Length; //!< Protocol magic number size in bytes.
+	unsigned char Protocol_Name_Characters[4]; //!< Protocol magic number.
+	unsigned char Protocol_Level; //!< MQTT protocol version.
 	unsigned char Connect_Flags;
 	unsigned short Keep_Alive;
 } TMQTTHeaderConnect;
@@ -126,10 +126,8 @@ void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Point
 	assert(Pointer_Connection_Parameters != NULL);
 	assert(Pointer_Connection_Parameters->Pointer_String_Client_Identifier != NULL);
 	assert(Pointer_Connection_Parameters->Pointer_Buffer != NULL);
-	// TODO other parameters
 	
 	// Initialize context
-	memset(Pointer_Context, 0, sizeof(TMQTTContext));
 	Pointer_Context->Pointer_Buffer = Pointer_Connection_Parameters->Pointer_Buffer;
 	
 	// Cache message relevant parts access
@@ -172,10 +170,14 @@ void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Point
 	MQTTAddFixedHeader(Pointer_Context, MQTT_CONTROL_PACKET_TYPE_CONNECT, sizeof(TMQTTHeaderConnect) + Payload_Size);
 }
 
-void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name, char *Pointer_Application_Message, int Application_Message_Size)
+void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name, void *Pointer_Application_Message, int Application_Message_Size)
 {
 	unsigned char *Pointer_Variable_Header;
 	int Data_Size;
+	
+	// Do some safety checks on parameters
+	assert(Pointer_Context != NULL);
+	assert(Pointer_String_Topic_Name != NULL);
 	
 	// Cache message relevant parts access
 	Pointer_Variable_Header = (unsigned char *) (MQTT_FIXED_HEADER_MAXIMUM_SIZE + Pointer_Context->Pointer_Buffer); // Keep enough room at the buffer beginning to store the biggest possible fixed header
@@ -198,9 +200,14 @@ void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name,
 
 void MQTTDisconnect(TMQTTContext *Pointer_Context)
 {
+	// Do some safety checks on parameters
+	assert(Pointer_Context != NULL);
+	
+	// Fill fixed header
 	Pointer_Context->Pointer_Buffer[0] = MQTT_CONTROL_PACKET_TYPE_DISCONNECT;
 	Pointer_Context->Pointer_Buffer[1] = 0;
 	
+	// Terminate message
 	Pointer_Context->Pointer_Message_Buffer = Pointer_Context->Pointer_Buffer;
 	Pointer_Context->Message_Size = 2;
 }

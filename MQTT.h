@@ -35,11 +35,19 @@ typedef struct
 //-------------------------------------------------------------------------------------------------
 // Functions
 //-------------------------------------------------------------------------------------------------
-/** TODO */
+/** Create a CONNECT packet to send to the server.
+ * @param Pointer_Context On output, context will be fully initialized using provided parameters. User does not need to initialize anything from this variable.
+ * @param Pointer_Connection_Parameters All connection parameters are defined in this structure. See TMQTTConnectionParameters for field details.
+ */
 void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Pointer_Connection_Parameters);
 
-/** TODO */
-void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name, char *Pointer_Application_Message, int Application_Message_Size);
+/** Create a PUBLISH packet to send to the server.
+ * @param Pointer_Context A context previously initialized with a call to MQTTConnect().
+ * @param Pointer_String_Topic_Name Topic name is mandatory, user must always provide a string.
+ * @param Pointer_Application_Message Data to send for the specified topic, it can by binary data. This pointer does not need to be valid if Application_Message_Size is equal to zero.
+ * @param Application_Message_Size How many bytes of application message to send. Set to zero if there is no application data.
+ */
+void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name, void *Pointer_Application_Message, int Application_Message_Size);
 
 /** Create a DISCONNECT packet to send to the server.
  * @param Pointer_Context A context previously initialized with a call to MQTTConnect().
