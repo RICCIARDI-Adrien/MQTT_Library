@@ -27,6 +27,7 @@ typedef enum
 	MQTT_CONTROL_PACKET_TYPE_CONNECT = 1 << 4,
 	MQTT_CONTROL_PACKET_TYPE_CONNACK = 2 << 4,
 	MQTT_CONTROL_PACKET_TYPE_PUBLISH = 3 << 4,
+	MQTT_CONTROL_PACKET_TYPE_SUBSCRIBE = (8 << 4) | 0x02, // Bit 1 must always be set, see specification chapter 3.8.1 for details.
 	MQTT_CONTROL_PACKET_TYPE_DISCONNECT = 14 << 4
 } TMQTTControlPacketType;
 
@@ -175,6 +176,9 @@ int MQTTIsConnectionEstablished(void *Pointer_Message_Buffer, int Message_Size)
 {
 	unsigned char *Pointer_Buffer;
 	
+	// Do some safety checks on parameters
+	assert(Pointer_Message_Buffer != NULL);
+	
 	// Make sure message is well-formed
 	if (Message_Size < MQTT_CONNACK_MESSAGE_SIZE) return -1;
 	
@@ -212,6 +216,35 @@ void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name,
 	
 	// Terminate message
 	MQTTAddFixedHeader(Pointer_Context, MQTT_CONTROL_PACKET_TYPE_PUBLISH, Data_Size);
+}
+
+void MQTTSubscribe(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name)
+{
+	unsigned char *Pointer_Variable_Header;
+	int Data_Size;
+	
+	// Do some safety checks on parameters
+	assert(Pointer_Context != NULL);
+	assert(Pointer_String_Topic_Name != NULL);
+	
+	// Cache message relevant parts access
+	Pointer_Variable_Header = (unsigned char *) (MQTT_FIXED_HEADER_MAXIMUM_SIZE + Pointer_Context->Pointer_Buffer); // Keep enough room at the buffer beginning to store the biggest possible fixed header
+	
+	// Add packet identifier (a zero value means that no QoS is used) TODO get it from function parameters when needed
+	Pointer_Variable_Header[0] = 0;
+	Pointer_Variable_Header[1] = 0;
+	Pointer_Variable_Header += 2;
+	Data_Size = 2;
+	
+	// Add topic
+	Data_Size += MQTTAppendString(&Pointer_Variable_Header, Pointer_String_Topic_Name);
+	
+	// Add requested QoS for this topic TODO get QoS from function parameter
+	*Pointer_Variable_Header = 0; // No QoS for now
+	Data_Size++;
+	
+	// Terminate message
+	MQTTAddFixedHeader(Pointer_Context, MQTT_CONTROL_PACKET_TYPE_SUBSCRIBE, Data_Size);
 }
 
 void MQTTDisconnect(TMQTTContext *Pointer_Context)

@@ -74,6 +74,13 @@ int MQTTIsConnectionEstablished(void *Pointer_Message_Buffer, int Message_Size);
  */
 void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name, void *Pointer_Application_Message, int Application_Message_Size);
 
+/** Create a SUBSCRIBE packet to send to the server.
+ * @param Pointer_Context A context previously initialized with a call to MQTTConnect().
+ * @param Pointer_String_Topic_Name Topic name is mandatory, user must always provide a string.
+ * @note Only one topic can be specified at a time (specifications allow multiple ones). Just send multiple SUBSCRIBE messages to carry the same operation.
+ */
+void MQTTSubscribe(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name);
+
 /** Create a DISCONNECT packet to send to the server.
  * @param Pointer_Context A context previously initialized with a call to MQTTConnect().
  * @note Client should close network connection after this packet has been sent.
