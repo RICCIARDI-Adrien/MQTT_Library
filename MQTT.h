@@ -12,15 +12,13 @@
 /** Context shared across MQTT functions. */
 typedef struct
 {
-	// Following fields contain the MQTT message ready to transmit or to decode (in case of reception)
-	unsigned char *Pointer_Message_Buffer;
-	int Message_Size;
-	
 	// Following fields are for internal usage only, do not modify or use
+	unsigned char *Pointer_Message_Buffer; //!< This is the real beginning of the message. Use MQTT_GET_MESSAGE_BUFFER() to get this field.
+	int Message_Size; //!< How many bytes in the current message. Use MQTT_GET_MESSAGE_SIZE() to get this field.
 	unsigned char *Pointer_Buffer; //!< The buffer in which messages are forged. A message does not necessarily start from offset 0. Only Pointer_Message_Buffer pointer tells the message beginning.
 } TMQTTContext;
 
-/** Parameters to provide when establishing an MQTT connection to the server. */
+/** Parameters to provide when establishing a MQTT connection to the server. */
 typedef struct
 {
 	char *Pointer_String_Client_Identifier; //!< This string is mandatory.
@@ -31,6 +29,21 @@ typedef struct
 	// TODO : add will support
 	void *Pointer_Buffer; //!< The buffer in which messages will be forged. Make sure it is big enough.
 } TMQTTConnectionParameters;
+
+//-------------------------------------------------------------------------------------------------
+// Macros
+//-------------------------------------------------------------------------------------------------
+/** Retrieve a message payload buffer.
+ * @param Pointer_Context An initialized MQTT context containing a valid message.
+ * @return A pointer on the message beginning.
+ */
+#define MQTT_GET_MESSAGE_BUFFER(Pointer_Context) (Pointer_Context)->Pointer_Message_Buffer
+
+/** Retrieve a message payload size.
+ * @param Pointer_Context An initialized MQTT context containing a valid message.
+ * @return The message size in bytes.
+ */
+#define MQTT_GET_MESSAGE_SIZE(Pointer_Context) (Pointer_Context)->Message_Size
 
 //-------------------------------------------------------------------------------------------------
 // Functions

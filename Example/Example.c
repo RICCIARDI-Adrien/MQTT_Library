@@ -61,7 +61,7 @@ void ExampleConnectAndPublishData(char *Pointer_String_Client_ID, char *Pointer_
 	MQTT_Connection_Parameters.Keep_Alive = 60;
 	MQTT_Connection_Parameters.Pointer_Buffer = Buffer;
 	MQTTConnect(&MQTT_Context, &MQTT_Connection_Parameters);
-	if (write(Socket, MQTT_Context.Pointer_Message_Buffer, MQTT_Context.Message_Size) != MQTT_Context.Message_Size)
+	if (write(Socket, MQTT_GET_MESSAGE_BUFFER(&MQTT_Context), MQTT_GET_MESSAGE_SIZE(&MQTT_Context)) != MQTT_GET_MESSAGE_SIZE(&MQTT_Context))
 	{
 		printf("Error : failed to send MQTT CONNECT packet (%s).\n", strerror(errno));
 		exit(EXIT_FAILURE);
@@ -73,7 +73,7 @@ void ExampleConnectAndPublishData(char *Pointer_String_Client_ID, char *Pointer_
 	// Publish data
 	printf("Sending PUBLISH packet...\n");
 	MQTTPublish(&MQTT_Context, Pointer_String_Topic_Name, Pointer_Application_Data, Application_Data_Size);
-	if (write(Socket, MQTT_Context.Pointer_Message_Buffer, MQTT_Context.Message_Size) != MQTT_Context.Message_Size)
+	if (write(Socket, MQTT_GET_MESSAGE_BUFFER(&MQTT_Context), MQTT_GET_MESSAGE_SIZE(&MQTT_Context)) != MQTT_GET_MESSAGE_SIZE(&MQTT_Context))
 	{
 		printf("Error : failed to send MQTT PUBLISH packet (%s).\n", strerror(errno));
 		exit(EXIT_FAILURE);
@@ -82,7 +82,7 @@ void ExampleConnectAndPublishData(char *Pointer_String_Client_ID, char *Pointer_
 	// Disconnect from MQTT server
 	MQTTDisconnect(&MQTT_Context);
 	printf("Sending DISCONNECT packet...\n");
-	if (write(Socket, MQTT_Context.Pointer_Message_Buffer, MQTT_Context.Message_Size) != MQTT_Context.Message_Size)
+	if (write(Socket, MQTT_GET_MESSAGE_BUFFER(&MQTT_Context), MQTT_GET_MESSAGE_SIZE(&MQTT_Context)) != MQTT_GET_MESSAGE_SIZE(&MQTT_Context))
 	{
 		printf("Error : failed to send MQTT DISCONNECT packet (%s).\n", strerror(errno));
 		exit(EXIT_FAILURE);
