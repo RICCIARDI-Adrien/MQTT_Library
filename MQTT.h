@@ -31,8 +31,11 @@ typedef struct
 } TMQTTConnectionParameters;
 
 //-------------------------------------------------------------------------------------------------
-// Macros
+// Constants and macros
 //-------------------------------------------------------------------------------------------------
+/** How many bytes are expected for a CONNACK message. */
+#define MQTT_CONNACK_MESSAGE_SIZE 4
+
 /** Retrieve a message payload buffer.
  * @param Pointer_Context An initialized MQTT context containing a valid message.
  * @return A pointer on the message beginning.
@@ -53,6 +56,15 @@ typedef struct
  * @param Pointer_Connection_Parameters All connection parameters are defined in this structure. See TMQTTConnectionParameters for field details.
  */
 void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Pointer_Connection_Parameters);
+
+/** Process a CONNACK message received from the server.
+ * @param Pointer_Message_Buffer The CONNACK message sent by the server. See notes for detail.
+ * @param Message_Size How many bytes of data were read from the server.
+ * @return -1 if the message is malformed,
+ * @return The server response code (0 or a positive value). A value of 0 tells that connection is granted, all other values indicate an error (see specifications for details).
+ * @note After sending a CONNECT message using MQTTConnect(), wait for the server to send a MQTT_CONNACK_MESSAGE_SIZE bytes packet. Then use MQTTIsConnectionEstablished() to retrieve the server response code.
+ */
+int MQTTIsConnectionEstablished(void *Pointer_Message_Buffer, int Message_Size);
 
 /** Create a PUBLISH packet to send to the server.
  * @param Pointer_Context A context previously initialized with a call to MQTTConnect().

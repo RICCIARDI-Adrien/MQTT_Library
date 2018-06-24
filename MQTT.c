@@ -25,6 +25,7 @@
 typedef enum
 {
 	MQTT_CONTROL_PACKET_TYPE_CONNECT = 1 << 4,
+	MQTT_CONTROL_PACKET_TYPE_CONNACK = 2 << 4,
 	MQTT_CONTROL_PACKET_TYPE_PUBLISH = 3 << 4,
 	MQTT_CONTROL_PACKET_TYPE_DISCONNECT = 14 << 4
 } TMQTTControlPacketType;
@@ -168,6 +169,21 @@ void MQTTConnect(TMQTTContext *Pointer_Context, TMQTTConnectionParameters *Point
 	
 	// Terminate message
 	MQTTAddFixedHeader(Pointer_Context, MQTT_CONTROL_PACKET_TYPE_CONNECT, sizeof(TMQTTHeaderConnect) + Payload_Size);
+}
+
+int MQTTIsConnectionEstablished(void *Pointer_Message_Buffer, int Message_Size)
+{
+	unsigned char *Pointer_Buffer;
+	
+	// Make sure message is well-formed
+	if (Message_Size < MQTT_CONNACK_MESSAGE_SIZE) return -1;
+	
+	// Check packet type
+	Pointer_Buffer = Pointer_Message_Buffer;
+	if (Pointer_Buffer[0] != (unsigned char) MQTT_CONTROL_PACKET_TYPE_CONNACK) return -1;
+	
+	// Retrieve response code
+	return Pointer_Buffer[3];
 }
 
 void MQTTPublish(TMQTTContext *Pointer_Context, char *Pointer_String_Topic_Name, void *Pointer_Application_Message, int Application_Message_Size)
