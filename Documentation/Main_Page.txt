@@ -1,4 +1,6 @@
 /** @mainpage MQTT library usage
  *
  * See MQTT.h documentation.
+ *
+ * Library usage examples are located in Examples directory.
  */

@@ -69,6 +69,7 @@ void PublishConnectAndPublishData(char *Pointer_String_Client_ID, char *Pointer_
 	}
 	
 	// Specifications allow to send control packets without waiting for CONNACK, but if the client is too fast the server can't keep up, so wait for the CONNACK
+	printf("Waiting for CONNACK packet...\n");
 	Read_Bytes_Count = read(Socket, Buffer, sizeof(Buffer));
 	Result = MQTTIsConnectionEstablished(Buffer, Read_Bytes_Count);
 	if (Result != 0)
