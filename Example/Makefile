@@ -1,10 +1,8 @@
 CC = gcc
 CCFLAGS = -W -Wall
 
-BINARY = Example
-
 all:
-	$(CC) $(CCFLAGS) -I.. Example.c ../MQTT.c -o $(BINARY)
+	$(CC) $(CCFLAGS) -I.. Publish.c ../MQTT.c -o Publish
 
 clean:
-	rm -r $(BINARY)
+	rm -r Publish

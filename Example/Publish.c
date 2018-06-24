@@ -1,5 +1,5 @@
-/** @file Example.c
- * Example and test case for the MQTT library.
+/** @file Publish.c
+ * Topic "publish" example and test case for the MQTT library.
  * @author Adrien RICCIARDI
  */
 #include <arpa/inet.h>
@@ -18,20 +18,21 @@
 // Private variables
 //-------------------------------------------------------------------------------------------------
 /** Server IP address. */
-static char Example_String_Server_IP_Address[40]; // Enough for an IPv6 address.
+static char Publish_String_Server_IP_Address[40]; // Enough for an IPv6 address.
 /** Server port. */
-static unsigned short Example_Server_Port;
+static unsigned short Publish_Server_Port;
 
 //-------------------------------------------------------------------------------------------------
 // Private functions
 //-------------------------------------------------------------------------------------------------
-void ExampleConnectAndPublishData(char *Pointer_String_Client_ID, char *Pointer_String_User_Name, char *Pointer_String_Password, char *Pointer_String_Topic_Name, void *Pointer_Application_Data, int Application_Data_Size)
+void PublishConnectAndPublishData(char *Pointer_String_Client_ID, char *Pointer_String_User_Name, char *Pointer_String_Password, char *Pointer_String_Topic_Name, void *Pointer_Application_Data, int Application_Data_Size)
 {
 	static unsigned char Buffer[1024]; // Avoid storing a big buffer on the stack
 	TMQTTContext MQTT_Context;
 	TMQTTConnectionParameters MQTT_Connection_Parameters;
-	int Socket;
+	int Socket, Result;
 	struct sockaddr_in Address;
+	ssize_t Read_Bytes_Count;
 	
 	// Create a TCP socket
 	Socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -42,10 +43,10 @@ void ExampleConnectAndPublishData(char *Pointer_String_Client_ID, char *Pointer_
 	}
 	
 	// Try to connect to the server
-	printf("Connecting to '%s:%d'...\n", Example_String_Server_IP_Address, Example_Server_Port);
+	printf("Connecting to '%s:%d'...\n", Publish_String_Server_IP_Address, Publish_Server_Port);
 	Address.sin_family = AF_INET;
-	Address.sin_addr.s_addr = inet_addr(Example_String_Server_IP_Address);
-	Address.sin_port = htons(Example_Server_Port);
+	Address.sin_addr.s_addr = inet_addr(Publish_String_Server_IP_Address);
+	Address.sin_port = htons(Publish_Server_Port);
 	if (connect(Socket, (const struct sockaddr *) &Address, sizeof(Address)) == -1)
 	{
 		printf("Error : failed to connect to MQTT server (%s).\n", strerror(errno));
@@ -67,8 +68,14 @@ void ExampleConnectAndPublishData(char *Pointer_String_Client_ID, char *Pointer_
 		exit(EXIT_FAILURE);
 	}
 	
-	// It is possible to wait for the MQTT CONNACK packet to be received, but specifications allow to send control packets without waiting for CONNACK
-	//read(Socket, Buffer, sizeof(Buffer));
+	// Specifications allow to send control packets without waiting for CONNACK, but if the client is too fast the server can't keep up, so wait for the CONNACK
+	Read_Bytes_Count = read(Socket, Buffer, sizeof(Buffer));
+	Result = MQTTIsConnectionEstablished(Buffer, Read_Bytes_Count);
+	if (Result != 0)
+	{
+		printf("Error : server rejected connection. CONNACK return code : 0x%X\n", Result);
+		exit(EXIT_FAILURE);
+	}
 	
 	// Publish data
 	printf("Sending PUBLISH packet...\n");
@@ -104,17 +111,17 @@ int main(int argc, char *argv[])
 			"Use wireshark or another network traffic analyzer in the same time to check if the packets are well formed.\n", argv[0]);
 		return EXIT_FAILURE;
 	}
-	strcpy(Example_String_Server_IP_Address, argv[1]);
-	Example_Server_Port = atoi(argv[2]);
+	strcpy(Publish_String_Server_IP_Address, argv[1]);
+	Publish_Server_Port = atoi(argv[2]);
 	
-	// Test message with all 
-	ExampleConnectAndPublishData("ID du client", "nom d'utilisateur", "super mot de passe de ouf", "test1", "charge utile courte", sizeof("charge utile courte") - 1);
+	// Test message with all parameters set
+	PublishConnectAndPublishData("ID du client", "nom d'utilisateur", "super mot de passe de ouf", "test1", "charge utile courte", sizeof("charge utile courte") - 1);
 	
 	// Send a "big" message to test "remaining length" computation algorithm
-	ExampleConnectAndPublishData("ID du client", "Ceci est un message bien plus long pour voir si le calcul d'une taille de paquet supérieure à 127 octets fonctionne correctement", "Ce champ aussi est allongé dans le but décrit exhaustivement dans le champ précédent", "le topic est lui aussi assez long pour que le message publish dépasse 127 caractères et qu'il faille calculer la taille sur deux octets", "la charge utile est un peu plus longue aussi même si la longueur du topic devrait suffire pour atteindre les 127 octets", sizeof("la charge utile est un peu plus longue aussi même si la longueur du topic devrait suffire pour atteindre les 127 octets") - 1);
+	PublishConnectAndPublishData("ID du client", "Ceci est un message bien plus long pour voir si le calcul d'une taille de paquet supérieure à 127 octets fonctionne correctement", "Ce champ aussi est allongé dans le but décrit exhaustivement dans le champ précédent", "le topic est lui aussi assez long pour que le message publish dépasse 127 caractères et qu'il faille calculer la taille sur deux octets", "la charge utile est un peu plus longue aussi même si la longueur du topic devrait suffire pour atteindre les 127 octets", sizeof("la charge utile est un peu plus longue aussi même si la longueur du topic devrait suffire pour atteindre les 127 octets") - 1);
 	
 	// Send a message with less parameters
-	ExampleConnectAndPublishData("ID du client", NULL, NULL, "topic", "données", sizeof("données") - 1);
+	PublishConnectAndPublishData("ID du client", NULL, NULL, "topic", "données", sizeof("données") - 1);
 	
 	return 0;
 }
